@@ -7,8 +7,8 @@ class TaskForm extends StatefulWidget {
   final Function({
     required String title,
     DateTime? dueDate,
-    TaskPriority priority,
-    TaskCategory category,
+    TaskPriority? priority,
+    TaskCategory? category,
     DateTime? reminderTime,
   }) onSubmit;
 

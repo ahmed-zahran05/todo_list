@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:todo_list/models/task.dart';
 import 'package:todo_list/core/colors.dart';
+import 'package:todo_list/services/task_service.dart';
 
 class FilterWidget extends StatelessWidget {
   final TaskCategory? selectedCategory;
