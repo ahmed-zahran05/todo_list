@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class HorizontalDatePicker extends StatefulWidget {
+  final Function(DateTime) onDateSelected;
+
+  const HorizontalDatePicker({Key? key, required this.onDateSelected}) : super(key: key);
+
   @override
   State<HorizontalDatePicker> createState() => _HorizontalDatePickerState();
 }
@@ -38,6 +42,7 @@ class _HorizontalDatePickerState extends State<HorizontalDatePicker> {
               setState(() {
                 selectedDate = day;
               });
+              widget.onDateSelected(day);
             },
             child: AnimatedContainer(
               duration: Duration(milliseconds: 200),
