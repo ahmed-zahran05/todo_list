@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:todo_list/core/colors.dart';
 import 'package:todo_list/widgets/task_card.dart';
+import 'package:todo_list/widgets/task_form.dart';
+import 'package:todo_list/widgets/filter_widget.dart';
 import 'package:todo_list/services/task_service.dart';
+import 'package:todo_list/models/task.dart';
 
 import 'calender_screen.dart';
 
@@ -13,6 +16,7 @@ class TodoScreen extends StatefulWidget {
 
 class _TodoScreenState extends State<TodoScreen> {
   final TextEditingController _taskController = TextEditingController();
+  bool _showFilters = false;
 
   @override
   void dispose() {
@@ -38,6 +42,19 @@ class _TodoScreenState extends State<TodoScreen> {
                   color: Colors.white,
                 ),
               ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showFilters = !_showFilters;
+                    });
+                  },
+                ),
+              ],
             ),
             body: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -48,6 +65,29 @@ class _TodoScreenState extends State<TodoScreen> {
                     taskService.setSelectedDate(date);
                   },
                 ),
+                if (_showFilters) ...[
+                  SizedBox(height: 10),
+                  Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: FilterWidget(
+                      selectedCategory: taskService.filterCategory,
+                      selectedPriority: taskService.filterPriority,
+                      sortOption: taskService.sortOption,
+                      onCategoryChanged: (category) {
+                        taskService.setFilterCategory(category);
+                      },
+                      onPriorityChanged: (priority) {
+                        taskService.setFilterPriority(priority);
+                      },
+                      onSortChanged: (option) {
+                        taskService.setSortOption(option);
+                      },
+                      onClearFilters: () {
+                        taskService.clearFilters();
+                      },
+                    ),
+                  ),
+                ],
                 SizedBox(height: 10),
                 Expanded(
                   child: taskService.tasks.isEmpty
@@ -72,6 +112,9 @@ class _TodoScreenState extends State<TodoScreen> {
                               onDelete: (taskId) {
                                 taskService.deleteTask(taskId);
                               },
+                              onEdit: (task) {
+                                _showTaskForm(task: task, taskService: taskService);
+                              },
                             );
                           },
                           scrollDirection: Axis.vertical,
@@ -81,68 +124,54 @@ class _TodoScreenState extends State<TodoScreen> {
             ),
             floatingActionButton: FloatingActionButton(
               onPressed: () {
-                _taskController.clear();
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
-                  builder: (context) {
-                    return Padding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.of(context).viewInsets.bottom,
-                        top: 20,
-                        left: 20,
-                        right: 20,
-                      ),
-                      child: Container(
-                        height: 250,
-                        width: double.infinity,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Text(
-                              "Add Task",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            SizedBox(height: 20),
-                            TextField(
-                              controller: _taskController,
-                              decoration: InputDecoration(
-                                hintText: "Task title",
-                                border: OutlineInputBorder(),
-                              ),
-                              autofocus: true,
-                            ),
-                            SizedBox(height: 20),
-                            ElevatedButton(
-                              onPressed: () {
-                                if (_taskController.text.trim().isNotEmpty) {
-                                  taskService.addTask(_taskController.text.trim());
-                                  Navigator.pop(context);
-                                  _taskController.clear();
-                                }
-                              },
-                              child: Text("Add"),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
+                _showTaskForm(taskService: taskService);
               },
               child: Icon(Icons.add),
             ),
           );
         },
       ),
+    );
+  }
+
+  void _showTaskForm({Task? task, required TaskService taskService}) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return TaskForm(
+          task: task,
+          onSubmit: ({
+            required String title,
+            DateTime? dueDate,
+            TaskPriority priority,
+            TaskCategory category,
+            DateTime? reminderTime,
+          }) {
+            if (task != null) {
+              taskService.updateTask(
+                task.id,
+                title: title,
+                dueDate: dueDate,
+                priority: priority,
+                category: category,
+                reminderTime: reminderTime,
+              );
+            } else {
+              taskService.addTask(
+                title,
+                dueDate: dueDate,
+                priority: priority,
+                category: category,
+                reminderTime: reminderTime,
+              );
+            }
+          },
+        );
+      },
     );
   }
 }
